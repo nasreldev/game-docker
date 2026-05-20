@@ -1,41 +1,56 @@
 const express = require('express');
 const app = express();
 
-const angkaRahasia = Math.floor(Math.random() * 10) + 1;
+// Menyimpan status game di dalam memori kontainer
+let dataGame = {
+  angkaRahasia: Math.floor(Math.random() * 10) + 1,
+  percobaan: 0,
+  status: "Mulai menebak!"
+};
 
 app.get('/', (req, res) => {
   const tebakan = req.query.tebak;
-  let pesan = "Silakan tebak angka antara 1 sampai 10 dengan mengetik di URL!";
-  let warnaBg = "#0f172a"; 
+  const aksi = req.query.action;
 
-  if (tebakan) {
+  // Fitur Reset Game
+  if (aksi === 'reset') {
+    dataGame.angkaRahasia = Math.floor(Math.random() * 10) + 1;
+    dataGame.percobaan = 0;
+    dataGame.status = "Game telah direset! Angka baru telah dipilih.";
+  } 
+  // Fitur Tebak Angka
+  else if (tebakan) {
     const angkaTebakan = parseInt(tebakan);
-    if (angkaTebakan === angkaRahasia) {
-      pesan = `🎉 KAMU BENAR! Angka rahasianya adalah ${angkaRahasia}.`;
-      warnaBg = "#15803d"; 
-    } else if (angkaTebakan < angkaRahasia) {
-      pesan = `❌ SALAH! Angka tebakanmu (${angkaTebakan}) TERLALU KECIL.`;
-      warnaBg = "#b91c1c"; 
-    } else if (angkaTebakan > angkaRahasia) {
-      pesan = `❌ SALAH! Angka tebakanmu (${angkaTebakan}) TERLALU BESAR.`;
-      warnaBg = "#b91c1c"; 
+    dataGame.percobaan++;
+    
+    if (angkaTebakan === dataGame.angkaRahasia) {
+      dataGame.status = `🎉 BENAR! Angka rahasianya ${dataGame.angkaRahasia}. Total tebakan: ${dataGame.percobaan}x.`;
+    } else if (angkaTebakan < dataGame.angkaRahasia) {
+      dataGame.status = `❌ ${angkaTebakan} TERLALU KECIL! Coba lagi. (Tebakan ke-${dataGame.percobaan})`;
+    } else if (angkaTebakan > dataGame.angkaRahasia) {
+      dataGame.status = `❌ ${angkaTebakan} TERLALU BESAR! Coba lagi. (Tebakan ke-${dataGame.percobaan})`;
     }
   }
 
+  // Membuat Tombol Angka 1 sampai 10 secara otomatis
+  let tombolHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    tombolHTML += `<a href="/?tebak=${i}" style="display:inline-block; padding:12px 18px; margin:5px; background:#38bdf8; color:#0f172a; text-decoration:none; font-weight:bold; border-radius:5px;">${i}</a>`;
+  }
+
   res.send(`
-    <body style="font-family:sans-serif; text-align:center; padding:100px; background:${warnaBg}; color:white; transition: 0.5s;">
-      <h1 style="font-size: 40px;">🎮 MINI GAME: DOCKER NUMBER GUESSER</h1>
-      <p style="font-size: 20px; margin: 30px 0;">${pesan}</p>
+    <body style="font-family:sans-serif; text-align:center; padding:50px; background:#0f172a; color:white;">
+      <h1 style="font-size: 36px; color:#38bdf8;">🎮 DOCKER GAME V2: INTERACTIVE BUTTONS</h1>
       
-      <div style="background: rgba(255,255,255,0.1); padding: 20px; display: inline-block; border-radius: 10px;">
-        <p><b>Cara Bermain:</b> Tambahkan <code>?tebak=ANGKA</code> di akhir URL browser Anda.</p>
-        <p>Contoh: <a href="http://localhost:3000/?tebak=5" style="color:#38bdf8;">http://localhost:3000/?tebak=5</a></p>
+      <div style="background: rgba(255,255,255,0.05); padding: 25px; max-width: 500px; margin: 30px auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+        <p style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">${dataGame.status}</p>
+        <div style="margin-bottom: 25px;">${tombolHTML}</div>
+        <a href="/?action=reset" style="display:inline-block; padding:10px 20px; background:#ef4444; color:white; text-decoration:none; border-radius:5px; font-size:14px;">🔄 Reset Game</a>
       </div>
 
-      <hr style="border:1px solid rgba(255,255,255,0.2); max-width:500px; margin:40px auto;">
-      <p style="color:#94a3b8; font-size:14px;">Game ini dijalankan dari dalam Docker Container yang terisolasi.</p>
+      <p style="color:#94a3b8; font-size:13px;">Peningkatan V2 berjalan aman di dalam wadah Docker yang sama.</p>
     </body>
   `);
 });
 
-app.listen(3000, () => console.log('Game Docker aktif di port 3000'));
+app.listen(3000, () => console.log('Game Docker V2 aktif di port 3000'));
